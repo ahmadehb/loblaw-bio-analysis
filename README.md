@@ -18,17 +18,43 @@ make dashboard   # launch the Streamlit dashboard locally
 
 Four tables in 3NF:
 
-```
-projects (project_id PK)
-   │ 1:N
-subjects (subject_id PK, project_id FK, condition, age, sex)
-   │ 1:N
-samples (sample_id PK, subject_id FK, sample_type, treatment,
-         response, time_from_treatment_start)
-   │ 1:5
-cell_counts (id PK, sample_id FK, population, count,
-             UNIQUE(sample_id, population))
-```
+**`projects`**
+
+| Column | Type | Notes |
+|---|---|---|
+| `project_id` | TEXT | Primary key |
+
+**`subjects`** — one row per study subject
+
+| Column | Type | Notes |
+|---|---|---|
+| `subject_id` | TEXT | Primary key |
+| `project_id` | TEXT | Foreign key → `projects` |
+| `condition` | TEXT | melanoma / carcinoma / healthy |
+| `age` | INTEGER | |
+| `sex` | TEXT | M / F |
+
+**`samples`** — one row per biological sample (a subject typically has 3, one per timepoint)
+
+| Column | Type | Notes |
+|---|---|---|
+| `sample_id` | TEXT | Primary key |
+| `subject_id` | TEXT | Foreign key → `subjects` |
+| `sample_type` | TEXT | PBMC / WB |
+| `treatment` | TEXT | miraclib / phauximab / none |
+| `response` | TEXT | yes / no / NULL (for untreated) |
+| `time_from_treatment_start` | INTEGER | days |
+
+**`cell_counts`** — one row per (sample, population) pair, long format
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | INTEGER | Primary key |
+| `sample_id` | TEXT | Foreign key → `samples` |
+| `population` | TEXT | b_cell / cd8_t_cell / cd4_t_cell / nk_cell / monocyte |
+| `count` | INTEGER | |
+
+UNIQUE constraint on `(sample_id, population)`. Relationships: `projects` 1→N `subjects` 1→N `samples` 1→5 `cell_counts`.
 
 Rationale:
 Subject demographics concern subjects, not samples. The unprocessed CSV duplicates the condition, age, and sex for every one of a subject's three timepoint rows. This denormalized structure wastes space. Dividing a table into smaller tables ensures that each fact can only be stated once.
